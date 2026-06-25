@@ -1,26 +1,59 @@
 /* ═══════════════════════════════════════════════════════════════
-   MACHINE TRACKER — app.js
+   MACHINE TRACKER — app.js (Advanced)
    Stack: Web Speech API + Gemini 1.5 Flash + Google Apps Script
 ═══════════════════════════════════════════════════════════════ */
 
-// ─── ERROR CODE TABLE ────────────────────────────────────────
-const ERROR_CODES = [
-  { code: 'E001', name: 'Móp bát / hộp',         cat: 'Chất lượng' },
-  { code: 'E002', name: 'Lỗi tem nhãn',           cat: 'Chất lượng' },
-  { code: 'E003', name: 'Thiếu trọng lượng',      cat: 'Chất lượng' },
-  { code: 'E004', name: 'Kẹt băng tải',           cat: 'Cơ khí' },
-  { code: 'E005', name: 'Lỗi đầu hàn / ghép mí',  cat: 'Cơ khí' },
-  { code: 'E006', name: 'Thay khuôn / dụng cụ',   cat: 'Cơ khí' },
-  { code: 'E007', name: 'Lỗi cảm biến',           cat: 'Điện - Điều khiển' },
-  { code: 'E008', name: 'Lỗi nguồn điện',         cat: 'Điện - Điều khiển' },
-  { code: 'E009', name: 'Lỗi phần mềm / màn hình', cat: 'Điện - Điều khiển' },
-  { code: 'E010', name: 'Thiếu nguyên liệu',      cat: 'Vật tư' },
-  { code: 'E011', name: 'Bảo trì định kỳ (PM)',   cat: 'Bảo trì' },
-  { code: 'E012', name: 'Vệ sinh máy',            cat: 'Bảo trì' },
-  { code: 'E013', name: 'Chờ QC kiểm tra',        cat: 'Quy trình' },
-  { code: 'E014', name: 'Chờ lệnh sản xuất',      cat: 'Quy trình' },
-  { code: 'E015', name: 'Sự cố khác',             cat: 'Khác' },
+// ─── DANH SÁCH MÁY & MÃ ───────────────────────────────────────
+const MACHINES = [
+  { name: 'Máy đóng gói 1', code: 'BBC101', type: 'Đóng gói' },
+  { name: 'Máy ghép mí', code: 'MX02', type: 'Ghép mí' },
+  { name: 'Máy đóng thùng', code: 'PKG3', type: 'Đóng thùng' },
+  { name: 'Máy cấp nước', code: 'WTR01', type: 'Hỗ trợ' },
 ];
+
+// ─── MÃ LỖI THEO LOẠI MÁY ─────────────────────────────────────
+const ERROR_CODES_BY_MACHINE = {
+  'BBC101': [
+    { code: 'E001', name: 'Móp bát / hộp', cat: 'Chất lượng' },
+    { code: 'E002', name: 'Lỗi tem nhãn', cat: 'Chất lượng' },
+    { code: 'E003', name: 'Thiếu trọng lượng', cat: 'Chất lượng' },
+    { code: 'E004', name: 'Kẹt băng tải', cat: 'Cơ khí' },
+    { code: 'E006', name: 'Thay khuôn / dụng cụ', cat: 'Cơ khí' },
+    { code: 'E010', name: 'Thiếu nguyên liệu', cat: 'Vật tư' },
+    { code: 'E011', name: 'Bảo trì định kỳ (PM)', cat: 'Bảo trì' },
+    { code: 'E012', name: 'Vệ sinh máy', cat: 'Bảo trì' },
+    { code: 'E015', name: 'Sự cố khác', cat: 'Khác' },
+  ],
+  'MX02': [
+    { code: 'E002', name: 'Lỗi tem nhãn', cat: 'Chất lượng' },
+    { code: 'E005', name: 'Lỗi đầu hàn / ghép mí', cat: 'Cơ khí' },
+    { code: 'E004', name: 'Kẹt băng tải', cat: 'Cơ khí' },
+    { code: 'E006', name: 'Thay khuôn / dụng cụ', cat: 'Cơ khí' },
+    { code: 'E007', name: 'Lỗi cảm biến', cat: 'Điện - Điều khiển' },
+    { code: 'E008', name: 'Lỗi nguồn điện', cat: 'Điện - Điều khiển' },
+    { code: 'E009', name: 'Lỗi phần mềm / màn hình', cat: 'Điện - Điều khiển' },
+    { code: 'E011', name: 'Bảo trì định kỳ (PM)', cat: 'Bảo trì' },
+    { code: 'E015', name: 'Sự cố khác', cat: 'Khác' },
+  ],
+  'PKG3': [
+    { code: 'E001', name: 'Móp bát / hộp', cat: 'Chất lượng' },
+    { code: 'E003', name: 'Thiếu trọng lượng', cat: 'Chất lượng' },
+    { code: 'E004', name: 'Kẹt băng tải', cat: 'Cơ khí' },
+    { code: 'E006', name: 'Thay khuôn / dụng cụ', cat: 'Cơ khí' },
+    { code: 'E007', name: 'Lỗi cảm biến', cat: 'Điện - Điều khiển' },
+    { code: 'E010', name: 'Thiếu nguyên liệu', cat: 'Vật tư' },
+    { code: 'E011', name: 'Bảo trì định kỳ (PM)', cat: 'Bảo trì' },
+    { code: 'E015', name: 'Sự cố khác', cat: 'Khác' },
+  ],
+  'WTR01': [
+    { code: 'E004', name: 'Kẹt / tắc ống', cat: 'Cơ khí' },
+    { code: 'E007', name: 'Lỗi cảm biến', cat: 'Điện - Điều khiển' },
+    { code: 'E008', name: 'Lỗi nguồn điện', cat: 'Điện - Điều khiển' },
+    { code: 'E010', name: 'Thiếu nguyên liệu', cat: 'Vật tư' },
+    { code: 'E011', name: 'Bảo trì định kỳ (PM)', cat: 'Bảo trì' },
+    { code: 'E015', name: 'Sự cố khác', cat: 'Khác' },
+  ],
+};
 
 // ─── STATE ───────────────────────────────────────────────────
 let downtimeRowCount = 0;
@@ -35,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadConfig();
   setDefaultDate();
   loadRecordsFromStorage();
+  populateMachineDropdown();
+  populateErrorList();
   loadDashboard();
-  renderErrorList(ERROR_CODES);
 
   // Set history date to today
   document.getElementById('histDate').value = todayStr();
@@ -58,6 +92,52 @@ function setDefaultDate() {
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
+}
+
+// ─── POPULATE MACHINE DROPDOWN ─────────────────────────────────
+function populateMachineDropdown() {
+  const select = document.getElementById('f_ten_may');
+  select.innerHTML = '<option value="">— Chọn máy —</option>';
+  MACHINES.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m.code; // Lưu mã máy vào value
+    opt.textContent = `${m.name} (${m.code})`;
+    select.appendChild(opt);
+  });
+}
+
+// ─── KHI CHỌN BẤT KỲ MÁY NÀO ──────────────────────────────────
+function onMachineNameChange() {
+  const maMAy = document.getElementById('f_ten_may').value;
+  const tenMay = document.querySelector('#f_ten_may option:checked').textContent;
+
+  // Tự động điền mã máy
+  if (maMAy) {
+    document.getElementById('f_ma_may').value = maMAy;
+    // Cập nhật danh sách lỗi cho máy này
+    populateErrorList(maMAy);
+  } else {
+    document.getElementById('f_ma_may').value = '';
+    populateErrorList();
+  }
+}
+
+// ─── POPULATE DANH SÁCH LỖI (LỌC THEO MÁY) ────────────────────
+function populateErrorList(maMay = null) {
+  let errors = [];
+
+  if (maMay && ERROR_CODES_BY_MACHINE[maMay]) {
+    errors = ERROR_CODES_BY_MACHINE[maMay];
+  } else {
+    // Nếu chưa chọn máy, hiển thị tất cả lỗi
+    Object.values(ERROR_CODES_BY_MACHINE).forEach(list => {
+      list.forEach(e => {
+        if (!errors.find(x => x.code === e.code)) errors.push(e);
+      });
+    });
+  }
+
+  renderErrorList(errors);
 }
 
 // ─── TAB SWITCH ──────────────────────────────────────────────
@@ -157,7 +237,7 @@ function startVoice() {
   };
 
   recognition.onend = () => {
-    if (isRecording) recognition.start(); // keep recording
+    if (isRecording) recognition.start();
   };
 
   recognition.start();
@@ -199,9 +279,13 @@ async function processWithAI() {
   aiBtn.textContent = '⏳ Đang phân tích...';
   aiStatus.textContent = '';
 
+  const machineList = MACHINES.map(m => m.code + ': ' + m.name).join(', ');
+
   const prompt = `Bạn là AI trợ lý nhà máy. Phân tích đoạn text tiếng Việt sau đây và trích xuất thông tin vào JSON.
 
 Text: "${text}"
+
+Danh sách mã máy hợp lệ: ${machineList}
 
 Trả về JSON với định dạng chính xác sau (bỏ trống nếu không có thông tin, KHÔNG bịa đặt):
 {
@@ -229,8 +313,8 @@ Trả về JSON với định dạng chính xác sau (bỏ trống nếu không 
 }
 
 Lưu ý:
-- Mã máy: thường là chữ + số, VD: BBC101, MX02, PKG3
-- Ca: "Ca 1", "Ca 2", hoặc "Ca 3"
+- Mã máy: chỉ lấy từ danh sách trên, VD: BBC101, MX02, PKG3, WTR01
+- Ca: "Ca 1 (06:00-14:00)", "Ca 2 (14:00-22:00)", hoặc "Ca 3 (22:00-06:00)"
 - Thời gian dừng: tính bằng phút (số nguyên)
 - Tình trạng lỗi: "Đã xử lý", "Đang xử lý", hoặc "Chưa xử lý"
 - Chỉ trả về JSON thuần, không có markdown hay giải thích thêm`;
@@ -279,8 +363,8 @@ function fillFormFromAI(d) {
     setTimeout(() => el.classList.remove('ai-filled'), 3000);
   };
 
-  set('f_ten_may',       d.ten_may);
   set('f_ma_may',        d.ma_may);
+  set('f_ten_may',       d.ma_may); // Set giá trị (mã máy)
   set('f_ngay',          d.ngay || todayStr());
   set('f_ca',            d.ca);
   set('f_nguoi_van_hanh',d.nguoi_van_hanh);
@@ -290,6 +374,11 @@ function fillFormFromAI(d) {
   set('f_san_luong_loi', d.san_luong_loi);
   set('f_gio_bat_dau',   d.gio_bat_dau);
   set('f_gio_ket_thuc',  d.gio_ket_thuc);
+
+  // Cập nhật danh sách lỗi theo máy vừa chọn
+  if (d.ma_may) {
+    populateErrorList(d.ma_may);
+  }
 
   // Downtime rows
   if (Array.isArray(d.dung_may)) {
@@ -376,7 +465,10 @@ function removeDowntimeRow(idx) {
 function openErrorModal(rowIdx) {
   currentErrorTargetRow = rowIdx;
   document.getElementById('errorSearch').value = '';
-  renderErrorList(ERROR_CODES);
+  // Lọc lỗi theo máy đã chọn
+  const maMay = document.getElementById('f_ma_may').value;
+  const errors = ERROR_CODES_BY_MACHINE[maMay] || [];
+  renderErrorList(errors);
   document.getElementById('modalErrors').classList.add('open');
 }
 
@@ -387,7 +479,10 @@ function closeErrorModal(e) {
 
 function filterErrors() {
   const q = document.getElementById('errorSearch').value.toLowerCase();
-  const filtered = ERROR_CODES.filter(e =>
+  const maMay = document.getElementById('f_ma_may').value;
+  const allErrors = ERROR_CODES_BY_MACHINE[maMay] || [];
+
+  const filtered = allErrors.filter(e =>
     e.code.toLowerCase().includes(q) ||
     e.name.toLowerCase().includes(q) ||
     e.cat.toLowerCase().includes(q)
@@ -397,6 +492,8 @@ function filterErrors() {
 
 function renderErrorList(list) {
   const el = document.getElementById('errorList');
+  if (!el) return; // Nếu modal chưa tải
+
   el.innerHTML = list.map(e => `
     <div class="error-item" onclick="selectError('${e.code}', '${e.name}')">
       <span class="error-code">${e.code}</span>
@@ -420,6 +517,9 @@ function collectForm() {
   const g = id => (document.getElementById(id)?.value || '').trim();
   const gn = id => parseFloat(document.getElementById(id)?.value) || 0;
 
+  const maMay = g('f_ma_may');
+  const tenMay = MACHINES.find(m => m.code === maMay)?.name || '';
+
   // Gather downtime rows
   const downtimes = [];
   document.querySelectorAll('.downtime-row').forEach(row => {
@@ -442,8 +542,8 @@ function collectForm() {
     id: 'REC_' + Date.now(),
     created_at: new Date().toISOString(),
     synced: false,
-    ten_may:        g('f_ten_may'),
-    ma_may:         g('f_ma_may'),
+    ten_may:        tenMay,
+    ma_may:         maMay,
     ngay:           g('f_ngay') || todayStr(),
     ca:             g('f_ca'),
     nguoi_van_hanh: g('f_nguoi_van_hanh'),
@@ -459,7 +559,8 @@ function collectForm() {
 }
 
 function validateForm(rec) {
-  if (!rec.ma_may) { toast('⚠ Vui lòng nhập Mã máy'); return false; }
+  if (!rec.ma_may) { toast('⚠ Vui lòng chọn Mã máy'); return false; }
+  if (!rec.ca) { toast('⚠ Vui lòng chọn Ca làm việc'); return false; }
   return true;
 }
 
@@ -513,7 +614,6 @@ async function syncPending() {
 
 // ─── LOCAL STORAGE ────────────────────────────────────────────
 function saveRecordsToStorage() {
-  // Keep last 500 records
   const trimmed = records.slice(-500);
   localStorage.setItem('mt_records', JSON.stringify(trimmed));
 }
@@ -522,7 +622,6 @@ function loadRecordsFromStorage() {
   try {
     records = JSON.parse(localStorage.getItem('mt_records') || '[]');
   } catch(e) { records = []; }
-  // Retry pending syncs after load
   setTimeout(syncPending, 2000);
 }
 
@@ -539,6 +638,7 @@ function resetForm() {
   document.getElementById('downtimeEmpty').style.display = '';
   downtimeRowCount = 0;
   clearTranscript();
+  populateErrorList();
 }
 
 // ─── DASHBOARD ────────────────────────────────────────────────
@@ -552,11 +652,9 @@ function loadDashboard() {
   document.getElementById('s_loi').textContent =
     todayRecs.reduce((s, r) => s + (r.san_luong_loi || 0), 0);
 
-  // Unique machines
   const machines = [...new Set(todayRecs.map(r => r.ma_may).filter(Boolean))];
   document.getElementById('s_may').textContent = machines.length;
 
-  // Machine cards
   const container = document.getElementById('machineCards');
   const empty = document.getElementById('dashEmpty');
 
@@ -574,7 +672,6 @@ function loadDashboard() {
     const totalLoi  = recs.reduce((s, r) => s + (r.san_luong_loi || 0), 0);
     const totalSL   = recs.reduce((s, r) => s + (r.tong_san_luong || 0), 0);
 
-    // Classify stripe color
     let stripe = 'ok';
     if (totalDung >= 3 || totalLoi > 50) stripe = 'err';
     else if (totalDung >= 1 || totalLoi > 0) stripe = 'warn';
@@ -677,7 +774,6 @@ function showDetail(id) {
 function showMachineDetail(maMay, date) {
   const recs = records.filter(r => r.ma_may === maMay && r.ngay === date);
   if (!recs.length) return;
-
   const r = recs[recs.length - 1];
   showDetail(r.id);
 }
