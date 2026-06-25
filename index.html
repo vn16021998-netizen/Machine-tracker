@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Machine Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <meta name="theme-color" content="#0D47A1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="app-header">
+  <div class="header-left">
+    <span class="header-icon">⚙</span>
+    <div>
+      <div class="header-title">Machine Tracker</div>
+      <div class="header-sub">Theo dõi vận hành máy</div>
+    </div>
+  </div>
+  <button class="icon-btn" onclick="openSettings()" title="Cài đặt">&#9881;</button>
+</header>
+
+<!-- ═══ TAB NAV ═══ -->
+<nav class="tab-nav">
+  <button class="tab-btn active" id="tab-btn-input"    onclick="switchTab('input')">    📝<span>Nhập phiếu</span></button>
+  <button class="tab-btn"        id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊<span>Dashboard</span></button>
+  <button class="tab-btn"        id="tab-btn-history"   onclick="switchTab('history')">  📋<span>Lịch sử</span></button>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     TAB 1 — NHẬP PHIẾU
+═══════════════════════════════════════════ -->
+<div id="tab-input" class="tab-pane active">
+
+  <!-- Voice Section -->
+  <div class="voice-card">
+    <div class="voice-hint" id="voiceHint">Nhấn 🎤 và nói thông tin vận hành bằng tiếng Việt</div>
+    <div class="voice-controls">
+      <button class="mic-btn" id="micBtn" onclick="toggleVoice()">🎤</button>
+    </div>
+    <div class="transcript-box" id="transcriptBox" style="display:none">
+      <div class="transcript-label">Đã nhận:</div>
+      <div class="transcript-text" id="transcriptText"></div>
+      <div class="transcript-actions">
+        <button class="btn-ai" id="aiBtn" onclick="processWithAI()">✨ Phân tích bằng AI</button>
+        <button class="btn-clear" onclick="clearTranscript()">✕ Xoá</button>
+      </div>
+    </div>
+    <div class="ai-status" id="aiStatus"></div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <div class="form-header">PHIẾU GHI NHẬN VẬN HÀNH THIẾT BỊ</div>
+
+    <!-- Thông tin chung -->
+    <div class="field-group-title">📌 Thông tin chung</div>
+    <div class="field-grid">
+      <div class="field">
+        <label>Tên máy</label>
+        <input type="text" id="f_ten_may" placeholder="VD: Máy đóng gói 1" />
+      </div>
+      <div class="field">
+        <label>Mã máy <span class="req">*</span></label>
+        <input type="text" id="f_ma_may" placeholder="VD: BBC101" />
+      </div>
+      <div class="field">
+        <label>Ngày</label>
+        <input type="date" id="f_ngay" />
+      </div>
+      <div class="field">
+        <label>Ca làm việc</label>
+        <select id="f_ca">
+          <option value="">— Chọn ca —</option>
+          <option value="Ca 1">Ca 1 (06:00–14:00)</option>
+          <option value="Ca 2">Ca 2 (14:00–22:00)</option>
+          <option value="Ca 3">Ca 3 (22:00–06:00)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Người vận hành</label>
+        <input type="text" id="f_nguoi_van_hanh" placeholder="Họ và tên" />
+      </div>
+      <div class="field">
+        <label>Tổ trưởng</label>
+        <input type="text" id="f_to_truong" placeholder="Họ và tên" />
+      </div>
+      <div class="field">
+        <label>Kỹ thuật</label>
+        <input type="text" id="f_ky_thuat" placeholder="Họ và tên" />
+      </div>
+      <div class="field">
+        <label>Tổng sản lượng</label>
+        <input type="number" id="f_tong_san_luong" placeholder="0" min="0" />
+      </div>
+      <div class="field">
+        <label>Sản lượng lỗi</label>
+        <input type="number" id="f_san_luong_loi" placeholder="0" min="0" />
+      </div>
+      <div class="field">
+        <label>Giờ bắt đầu</label>
+        <input type="time" id="f_gio_bat_dau" />
+      </div>
+      <div class="field">
+        <label>Giờ kết thúc</label>
+        <input type="time" id="f_gio_ket_thuc" />
+      </div>
+    </div>
+
+    <!-- Nhật ký dừng máy -->
+    <div class="field-group-title" style="margin-top:16px">
+      🛑 Nhật ký dừng máy
+      <button class="btn-add-row" onclick="addDowntimeRow()">+ Thêm dòng</button>
+    </div>
+    <div id="downtimeRows"></div>
+    <div class="downtime-empty" id="downtimeEmpty">Chưa có lần dừng máy nào. Nhấn "+ Thêm dòng" để thêm.</div>
+
+    <!-- Submit -->
+    <div class="submit-bar">
+      <button class="btn-submit" onclick="submitForm()">💾 Lưu phiếu</button>
+      <button class="btn-reset"  onclick="resetForm()">🔄 Làm mới</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 2 — DASHBOARD
+═══════════════════════════════════════════ -->
+<div id="tab-dashboard" class="tab-pane">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Dashboard hôm nay</div>
+      <div class="dash-date" id="dashDate"></div>
+    </div>
+    <button class="icon-btn" onclick="loadDashboard()">🔄</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card blue">
+      <div class="stat-val" id="s_phieu">0</div>
+      <div class="stat-lbl">Phiếu hôm nay</div>
+    </div>
+    <div class="stat-card orange">
+      <div class="stat-val" id="s_dung">0</div>
+      <div class="stat-lbl">Lần dừng máy</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-val" id="s_loi">0</div>
+      <div class="stat-lbl">Sản lượng lỗi</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-val" id="s_may">0</div>
+      <div class="stat-lbl">Máy hoạt động</div>
+    </div>
+  </div>
+
+  <div class="section-title">Trạng thái máy hôm nay</div>
+  <div id="machineCards"></div>
+  <div class="empty-state" id="dashEmpty" style="display:none">Chưa có dữ liệu hôm nay</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TAB 3 — LỊCH SỬ
+═══════════════════════════════════════════ -->
+<div id="tab-history" class="tab-pane">
+  <div class="hist-header">
+    <div class="dash-title">Lịch sử phiếu</div>
+    <input type="date" id="histDate" onchange="loadHistory()" />
+  </div>
+  <div id="historyList"></div>
+  <div class="empty-state" id="histEmpty" style="display:none">Không có phiếu nào trong ngày này</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: CÀI ĐẶT
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalSettings" onclick="closeSettings(event)">
+  <div class="modal-box">
+    <div class="modal-title">⚙️ Cài đặt kết nối</div>
+    <div class="field">
+      <label>Gemini API Key <a href="https://aistudio.google.com/app/apikey" target="_blank" class="help-link">(Lấy miễn phí)</a></label>
+      <input type="password" id="cfg_gemini" placeholder="AIzaSy..." />
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Google Apps Script URL <span class="hint-text">(xem hướng dẫn)</span></label>
+      <input type="text" id="cfg_script" placeholder="https://script.google.com/macros/s/..." />
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Tên nhà máy / Đơn vị</label>
+      <input type="text" id="cfg_factory" placeholder="VD: NutriNest - Phân xưởng 1" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-submit" onclick="saveSettings()">💾 Lưu cài đặt</button>
+      <button class="btn-reset"  onclick="closeSettings()">✕ Đóng</button>
+    </div>
+    <div class="cfg-status" id="cfgStatus"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: TRA CỨU MÃ LỖI
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalErrors" onclick="closeErrorModal(event)">
+  <div class="modal-box">
+    <div class="modal-title">🔍 Tra cứu mã lỗi</div>
+    <input type="text" id="errorSearch" oninput="filterErrors()" placeholder="Tìm theo mã hoặc tên lỗi..." style="margin-bottom:10px" />
+    <div id="errorList" class="error-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MODAL: CHI TIẾT PHIẾU
+═══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modalDetail" onclick="closeDetail(event)">
+  <div class="modal-box wide">
+    <div class="modal-title">📋 Chi tiết phiếu</div>
+    <div id="detailContent"></div>
+    <div class="modal-actions"><button class="btn-reset" onclick="closeDetail()">✕ Đóng</button></div>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
